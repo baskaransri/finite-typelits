@@ -32,42 +32,42 @@ import GHC.TypeLits
 
 import Data.Finite.Internal
 
--- | Convert an 'Integer' into a 'Finite', returning 'Nothing' if the input is out of bounds.
-packFinite :: KnownNat n => Integer -> Maybe (Finite n)
+-- | Convert an 'Int' into a 'Finite', returning 'Nothing' if the input is out of bounds.
+packFinite :: KnownNat n => Int -> Maybe (Finite n)
 packFinite x = result
     where
-        result = if x < natVal (fromJust result) && x >= 0
+        result = if x < natValInt (fromJust result) && x >= 0
             then Just $ Finite x
             else Nothing
 
 -- | Same as 'packFinite' but with a proxy argument to avoid type signatures.
-packFiniteProxy :: KnownNat n => proxy n -> Integer -> Maybe (Finite n)
+packFiniteProxy :: KnownNat n => proxy n -> Int -> Maybe (Finite n)
 packFiniteProxy _ = packFinite
 
 -- | Same as 'finite' but with a proxy argument to avoid type signatures.
-finiteProxy :: KnownNat n => proxy n -> Integer -> Finite n
+finiteProxy :: KnownNat n => proxy n -> Int -> Finite n
 finiteProxy _ = finite
 
 -- | Generate a list of length @n@ of all elements of @'Finite' n@.
 finites :: KnownNat n => [Finite n]
 finites = results
   where
-    results = Finite `fmap` [0 .. (natVal (head results) - 1)]
+    results = Finite `fmap` [0 .. (natValInt (head results) - 1)]
 
 -- | Same as 'finites' but with a proxy argument to avoid type signatures.
 finitesProxy :: KnownNat n => proxy n -> [Finite n]
 finitesProxy _ = finites
 
 -- | Produce the 'Finite' that is congruent to the given integer modulo @n@.
-modulo :: KnownNat n => Integer -> Finite n
+modulo :: KnownNat n => Int -> Finite n
 modulo x = result
     where
         result = if natVal result == 0
             then error "modulo: division by zero"
-            else Finite (x `mod` natVal result)
+            else Finite (x `mod` natValInt result)
 
 -- | Same as 'modulo' but with a proxy argument to avoid type signatures.
-moduloProxy :: KnownNat n => proxy n -> Integer -> Finite n
+moduloProxy :: KnownNat n => proxy n -> Int -> Finite n
 moduloProxy _ = modulo
 
 -- | Test two different types of finite numbers for equality.
@@ -81,7 +81,7 @@ cmp (Finite x) (Finite y) = x `compare` y
 
 -- | Convert a type-level literal into a 'Finite'.
 natToFinite :: (KnownNat n, KnownNat m, n + 1 <= m) => proxy n -> Finite m
-natToFinite p = Finite $ natVal p
+natToFinite p = Finite $ natValInt p
 
 -- | Add one inhabitant in the end.
 weaken :: Finite n -> Finite (n + 1)
@@ -91,7 +91,7 @@ weaken (Finite x) = Finite x
 strengthen :: KnownNat n => Finite (n + 1) -> Maybe (Finite n)
 strengthen (Finite x) = result
     where
-        result = if x < natVal (fromJust result)
+        result = if x < natValInt (fromJust result)
             then Just $ Finite x
             else Nothing
 
@@ -113,7 +113,7 @@ weakenN (Finite x) = Finite x
 strengthenN :: (KnownNat n, n <= m) => Finite m -> Maybe (Finite n)
 strengthenN (Finite x) = result
     where
-        result = if x < natVal (fromJust result)
+        result = if x < natValInt (fromJust result)
             then Just $ Finite x
             else Nothing
 
@@ -121,15 +121,15 @@ strengthenN (Finite x) = result
 shiftN :: (KnownNat n, KnownNat m, n <= m) => Finite n -> Finite m
 shiftN fx@(Finite x) = result
     where
-        result = Finite $ x + natVal result - natVal fx
+        result = Finite $ x + natValInt result - natValInt fx
 
 -- | Remove multiple inhabitants from the beginning, shifting everything down by the amount of inhabitants removed. Returns 'Nothing' if the input was one of the removed inhabitants.
 unshiftN :: (KnownNat n, KnownNat m, n <= m) => Finite m -> Maybe (Finite n)
 unshiftN fx@(Finite x) = result
     where
-        result = if x < natVal fx - natVal (fromJust result)
+        result = if x < natValInt fx - natValInt (fromJust result)
             then Nothing
-            else Just $ Finite $ x - natVal fx + natVal (fromJust result)
+            else Just $ Finite $ x - natValInt fx + natValInt (fromJust result)
 
 weakenProxy :: proxy k -> Finite n -> Finite (n + k)
 weakenProxy _ (Finite x) = Finite x
@@ -137,17 +137,17 @@ weakenProxy _ (Finite x) = Finite x
 strengthenProxy :: KnownNat n => proxy k -> Finite (n + k) -> Maybe (Finite n)
 strengthenProxy p (Finite x) = result
     where
-        result = if x < natVal (fromJust result)
+        result = if x < natValInt (fromJust result)
             then Just $ Finite x
             else Nothing
 
 shiftProxy :: KnownNat k => proxy k -> Finite n -> Finite (n + k)
-shiftProxy p (Finite x) = Finite $ x + natVal p
+shiftProxy p (Finite x) = Finite $ x + natValInt p
 
 unshiftProxy :: KnownNat k => proxy k -> Finite (n + k) -> Maybe (Finite n)
-unshiftProxy p (Finite x) = if x < natVal p
+unshiftProxy p (Finite x) = if x < natValInt p
     then Nothing
-    else Just $ Finite $ x - natVal p
+    else Just $ Finite $ x - natValInt p
 
 -- | Add two 'Finite's.
 add :: Finite n -> Finite m -> Finite (n + m)
@@ -169,26 +169,26 @@ getLeftType = error "getLeftType"
 -- | 'Left'-biased (left values come first) disjoint union of finite sets.
 combineSum :: KnownNat n => Either (Finite n) (Finite m) -> Finite (n + m)
 combineSum (Left (Finite x)) = Finite x
-combineSum efx@(Right (Finite x)) = Finite $ x + natVal (getLeftType efx)
+combineSum efx@(Right (Finite x)) = Finite $ x + natValInt (getLeftType efx)
 
 -- | 'fst'-biased (fst is the inner, and snd is the outer iteratee) product of finite sets.
 combineProduct :: KnownNat n => (Finite n, Finite m) -> Finite (n GHC.TypeLits.* m)
-combineProduct (fx@(Finite x), Finite y) = Finite $ x + y * natVal fx
+combineProduct (fx@(Finite x), Finite y) = Finite $ x + y * natValInt fx
 
 -- | Take a 'Left'-biased disjoint union apart.
 separateSum :: KnownNat n => Finite (n + m) -> Either (Finite n) (Finite m)
 separateSum (Finite x) = result
     where
-        result = if x >= natVal (getLeftType result)
-            then Right $ Finite $ x - natVal (getLeftType result)
+        result = if x >= natValInt (getLeftType result)
+            then Right $ Finite $ x - natValInt (getLeftType result)
             else Left $ Finite x
 
 -- | Take a 'fst'-biased product apart.
 separateProduct :: KnownNat n => Finite (n GHC.TypeLits.* m) -> (Finite n, Finite m)
 separateProduct (Finite x) = result
     where
-        result = (Finite $ x `mod` natVal (fst result), Finite $ x `div` natVal (fst result))
+        result = (Finite $ x `mod` natValInt (fst result), Finite $ x `div` natValInt (fst result))
 
 -- | Verifies that a given 'Finite' is valid. Should always return 'True' unles you bring the @Data.Finite.Internal.Finite@ constructor into the scope, or use 'Unsafe.Coerce.unsafeCoerce' or other nasty hacks
 isValidFinite :: KnownNat n => Finite n -> Bool
-isValidFinite fx@(Finite x) = x < natVal fx && x >= 0
+isValidFinite fx@(Finite x) = x < natValInt fx && x >= 0
