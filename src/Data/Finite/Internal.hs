@@ -34,6 +34,7 @@ newtype Finite (n :: Nat) = Finite Int
                           deriving (Eq, Ord, Generic)
 
 -- | An Int valued version of natVal
+{-# INLINABLE natValInt #-}
 natValInt :: KnownNat n => proxy n -> Int
 natValInt = fromInteger . natVal
 
@@ -81,6 +82,9 @@ instance KnownNat n => Read (Finite n) where
 
 -- | Modular arithmetic. Only the 'fromInteger' function is supposed to be useful.
 instance KnownNat n => Num (Finite n) where
+    {-# INLINABLE (+) #-}
+    {-# INLINABLE (-) #-}
+    {-# INLINABLE fromInteger #-}
     fx@(Finite x) + Finite y = Finite $ (x + y) `mod` natValInt fx
     fx@(Finite x) - Finite y = Finite $ (x - y) `mod` natValInt fx
     fx@(Finite x) * Finite y = Finite $ (x * y) `mod` natValInt fx

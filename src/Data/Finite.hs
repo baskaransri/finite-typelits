@@ -84,6 +84,7 @@ natToFinite :: (KnownNat n, KnownNat m, n + 1 <= m) => proxy n -> Finite m
 natToFinite p = Finite $ natValInt p
 
 -- | Add one inhabitant in the end.
+{-# INLINABLE weaken #-}
 weaken :: Finite n -> Finite (n + 1)
 weaken (Finite x) = Finite x
 
@@ -100,6 +101,7 @@ shift :: Finite n -> Finite (n + 1)
 shift (Finite x) = Finite (x + 1)
 
 -- | Remove one inhabitant from the beginning, shifting everything down by one. Returns 'Nothing' if the input was the removed inhabitant.
+{-# INLINABLE unshift #-}
 unshift :: Finite (n + 1) -> Maybe (Finite n)
 unshift (Finite x) = if x < 1
     then Nothing
