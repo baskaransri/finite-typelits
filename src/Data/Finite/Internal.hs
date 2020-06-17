@@ -84,6 +84,9 @@ instance KnownNat n => Read (Finite n) where
 instance KnownNat n => Num (Finite n) where
     {-# INLINABLE (+) #-}
     {-# INLINABLE (-) #-}
+    {-# INLINABLE (*) #-}
+    {-# INLINABLE abs #-}
+    {-# INLINABLE signum #-}
     {-# INLINABLE fromInteger #-}
     fx@(Finite x) + Finite y = Finite $ (x + y) `mod` natValInt fx
     fx@(Finite x) - Finite y = Finite $ (x - y) `mod` natValInt fx
